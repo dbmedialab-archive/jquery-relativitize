@@ -17,26 +17,39 @@
 	$.fn.relativitize = function(options){
 		
 		// Extend our default options with those provided.
-		var opts = $.extend({}, $.fn.relativitize.defaults, options);		
+		var opts = $.extend({}, $.fn.relativitize.defaults, options);
 		
-		this.each(function(){
+		return this.each(function(){
 			if( $(this).is('time') ){
 				var _element  = this;
 				var _date = moment( $(_element).attr('datetime') );
-				$(_element).html( _date.fromNow() );
-
-				setInterval(function(){
+				var _text = $(_element).html();
+				
+				if( moment().subtract(opts.gt.key, opts.gt.time).diff(_date) < 0 ){
 					$(_element).html( _date.fromNow() );
-				}, opts.refresh);
-			} else {
-				console.log('Ignoring elements that are not time.');
+					setInterval(function(){
+						$(_element).html( _date.fromNow() );
+					}, opts.refresh);
+				} else {
+					if(opts.use_format){
+						$(_element).html(_date.format(opts.format));
+					} else {
+						$(_element).html(_text);
+					};
+				};
 			};
 		});
 		
 	};
 	
 	$.fn.relativitize.defaults = {
-		refresh: 10000
+		use_format: false,
+		format: moment.defaultFormat,
+		refresh: 10000,
+		gt: { 
+			key: 'days', 
+			time: 1  
+		}
 	};
 	
 }(jQuery));
