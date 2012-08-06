@@ -8,7 +8,7 @@
 	@date       10.05.12
 	@author     Tom-Marius Olsen <tmol@dagbladet.no>
 
-	Copyright (c) 2012 db medialab <http://www.dbmedialab.no/>
+	Copyright (c) 2012 DB Medialab AS <http://www.dbmedialab.no/>
 
 */
 
