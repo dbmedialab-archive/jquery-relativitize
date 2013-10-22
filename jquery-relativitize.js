@@ -54,8 +54,24 @@
 				var $this = $(this),
 					data = $this.data('relativitize');
 				
-				if( data.relative && moment().subtract(data.gt.key, data.gt.time).diff(data.date) < 0 ){
-					priv.relative.apply($this);
+				if( moment().subtract(data.gt.key, data.gt.time).diff(data.date) < 0 ){
+					if( data.relative ){
+						priv.relative.apply($this);
+					} else {
+						priv.format.apply($this);
+					}
+					$this.addClass(data.toggleClass);
+				} else {
+					priv.format.apply($this);
+					$this.removeClass(data.toggleClass);
+				}
+				
+				if( data.relative ){
+					if( moment().subtract(data.gt.key, data.gt.time).diff(data.date) < 0 ){
+						priv.relative.apply($this);
+					} else {
+						priv.format.apply($this);
+					}
 				} else {
 					priv.format.apply($this);
 				}
@@ -102,7 +118,7 @@
 				$this.html(data.date.format(data.format));
 			} else {
 				$this.html(data.originalText);
-			};
+			}
 		}
 	};
 	
@@ -114,12 +130,13 @@
 			return pub.init.apply( this, arguments );
 		} else {
 			console.warn( 'jQuery relativitize: Method ' +  method + ' does not exist on jQuery.myplugin' );
-		};
+		}
 	};
 
 	//!Default options
 	$.fn.relativitize.defaults = {
 		toggle: true,
+		toggleClass: 'relativitize',
 		format: moment.defaultFormat,
 		refresh: 10000,
 		relative: true,

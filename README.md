@@ -25,6 +25,7 @@ Options:
 	
 	$('time').relativitize({
 		toggle: true,				  // Enable toggle between relative and formated date
+		toggleClass: 'relativitize', // The class the time-tag recives when it can be toggled
 		format: moment.defaultFormat, // YYYY-MM-DDTHH:mm:ssZ
 		refresh: 10000,				  // Milliseconds for each refresh
 		relative: true,				  // Wheter to display the relative data or the formated date
