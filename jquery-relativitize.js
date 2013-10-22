@@ -1,55 +1,134 @@
-/*
-
-	jquery-relativitize
-	--------
-
-	@file       jquery-relativitize.js
-	@version    
-	@date       10.05.12
-	@author     Tom-Marius Olsen <tmol@dagbladet.no>
-
-	Copyright (c) 2012 DB Medialab AS <http://www.dbmedialab.no/>
-
-*/
-
-(function($) {
-
-	$.fn.relativitize = function(options){
-		
-		// Extend our default options with those provided.
-		var opts = $.extend({}, $.fn.relativitize.defaults, options);
-		
-		return this.each(function(){
-			if( $(this).is('time') ){
-				var _element  = this;
-				var _date = moment( $(_element).attr('datetime') );
-				var _text = $(_element).html();
+(function( $ ){
+	'use strict';
+	//!Public functions
+	var pub = {
+		init : function( options ) {
+			return this.each(function(){
+				var $this = $(this);
 				
-				if( moment().subtract(opts.gt.key, opts.gt.time).diff(_date) < 0 ){
-					$(_element).html( _date.fromNow() );
-					setInterval(function(){
-						$(_element).html( _date.fromNow() );
-					}, opts.refresh);
-				} else {
-					if(opts.use_format){
-						$(_element).html(_date.format(opts.format));
-					} else {
-						$(_element).html(_text);
-					};
-				};
-			};
-		});
+				//If the plugin hasn't been initialized yet, read and save all settings
+				if(!$.isPlainObject( $this.data('relativitize') )){
+					$this.data('relativitize', $.extend({}, $.fn.relativitize.defaults, options) );
+					$this.data('relativitize').date = moment( $this.attr('datetime') );
+					$this.data('relativitize').originalText = $this.html();
+					
+					//Read options from the data-attr
+					if( $this.attr('data-relativitize') !== undefined ){
+						options = $this.attr('data-relativitize').split(';');
+						$.each(options, function( index, value ){
+							var p = value.split(':');
+							p[0] = $.trim(p[0]);
+							p[1] = $.trim(p[1]);
+							
+							if (/true/i.test(p[1])) p[1] = true;
+							if (/false/i.test(p[1])) p[1] = false;
+							if(! isNaN (p[1]-0) && p[1] !== null && p[1] !== "" && p[1] !== false && p[1] !== true){
+								p[1] = parseInt(p[1], 10);
+							}
+							if (p.length === 2 && p[0].length > 0){
+								$this.data('relativitize')[p[0]] = p[1];
+							}
+						});
+					}
+					
+					//Bind toggle between relativ and format
+					if( $this.data('relativitize').toggle ){
+						$this.on('click', function(event){
+							event.preventDefault();
+							pub.toggle.apply($this);
+						});
+					}
+					
+					//Setup interval to update the time
+					$this.data('relativitize').interval = setInterval(function(){
+						pub.update.apply($this);
+					}, $this.data('relativitize').refresh);
+				}
+				
+				pub.update.apply($this);
+			});
+		},
 		
+		update: function(){
+			return this.each(function(){
+				var $this = $(this),
+					data = $this.data('relativitize');
+				
+				if( data.relative && moment().subtract(data.gt.key, data.gt.time).diff(data.date) < 0 ){
+					priv.relative.apply($this);
+				} else {
+					priv.format.apply($this);
+				}
+			});
+		},
+		
+		toggle: function(){
+			return this.each(function(){
+				var $this = $(this);
+				$this.data('relativitize').relative = !$this.data('relativitize').relative;
+				pub.update.apply($this);
+			});
+		},
+		
+		destroy: function(){
+			return this.each(function(){
+				var $this = $(this),
+					data = $this.data('relativitize');
+				
+				clearInterval(data.interval);
+				if( data.toggle ){
+					$this.off('click');
+				}
+				$this.html( data.originalText );
+				$this.removeData('relativitize');
+			});
+		}
 	};
-	
-	$.fn.relativitize.defaults = {
-		use_format: false,
-		format: moment.defaultFormat,
-		refresh: 10000,
-		gt: { 
-			key: 'days', 
-			time: 1  
+
+	//!Private functions
+	var priv = {
+		relative: function(){
+			var $this = $(this),
+				data = $this.data('relativitize');
+
+			$this.html( data.date.fromNow() );
+		},
+		
+		format: function(){
+			var $this = $(this),
+				data = $this.data('relativitize');
+			
+			if(data.format){
+				$this.html(data.date.format(data.format));
+			} else {
+				$this.html(data.originalText);
+			};
 		}
 	};
 	
-}(jQuery));
+	$.fn.relativitize = function( method ) {
+		//!Method calling logic
+		if ( pub[method] ) {
+			return pub[ method ].apply( this, Array.prototype.slice.call( arguments, 1 ));
+		} else if ( typeof method === 'object' || ! method ) {
+			return pub.init.apply( this, arguments );
+		} else {
+			console.warn( 'jQuery relativitize: Method ' +  method + ' does not exist on jQuery.myplugin' );
+		};
+	};
+
+	//!Default options
+	$.fn.relativitize.defaults = {
+		toggle: true,
+		format: moment.defaultFormat,
+		refresh: 10000,
+		relative: true,
+		gt: { 
+			key: 'days', 
+			time: 1 
+		}
+	};
+	
+	$('time[data-relativitize]').relativitize();
+	
+})( jQuery );
